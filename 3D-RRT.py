@@ -47,7 +47,7 @@ for i in range(NUMNODES):
         if dist(p,rand) < dist(cur_node,rand):
             cur_node = p
     if dist(cur_node, goal) < EPSILON:
-        ax.plot([cur_node[0], goal[0]], [cur_node[1], goal[1]], [cur_node[2], goal[2]], color = 'b')
+        # ax.plot([cur_node[0], goal[0]], [cur_node[1], goal[1]], [cur_node[2], goal[2]], color = 'b')
         random_tree[goal] = cur_node
         current = cur_node
         print(i)
@@ -57,7 +57,7 @@ for i in range(NUMNODES):
     
     random_tree[newnode] = cur_node
     
-    ax.plot([cur_node[0], newnode[0]], [cur_node[1], newnode[1]], [cur_node[2], newnode[2]], color = 'b')
+    # ax.plot([cur_node[0], newnode[0]], [cur_node[1], newnode[1]], [cur_node[2], newnode[2]], color = 'b')
     if i/NUMNODES in progress:
         print(i/NUMNODES, 'finished')
     
