@@ -43,31 +43,47 @@ class rectangle(object):
         short_side, long_side = self.get_short_side()
         print(short_side, long_side)
 
-        front_dots = []
-        back_dots = []
+        route_dots = []
         camera_angle = 1.3
         if short_side[0][0] != short_side[1][0]:
             for i in frange(short_side[0][0]+camera_angle, short_side[0][1], camera_angle):
-                front_dots.append((i, short_side[0][1]))
-                back_dots.append((i, long_side[0][1]))
+                route_dots.append((i, short_side[0][1]))
+                route_dots.append((i, long_side[0][1]))
                 # plt.scatter(i, short_side[0][1], color = 'k')
 
         if short_side[0][1] != short_side[1][1]:
             for i in frange(short_side[0][1]+camera_angle, short_side[1][1], camera_angle):
-                front_dots.append((short_side[0][0], i))
-                back_dots.append((long_side[1][0], i))
+                route_dots.append((short_side[0][0], i))
+                route_dots.append((long_side[1][0], i))
                 # plt.scatter(short_side[0][0], i, color = 'k')
 
-        print(front_dots, back_dots)
-        for dot in front_dots:
-            plt.scatter(dot[0], dot[1], color = 'k')
-        for dot in back_dots:
+        print(route_dots)
+        for dot in route_dots:
             plt.scatter(dot[0], dot[1], color = 'k')
 
     def plot_rect(self):
         rect = self.get_as_array()
         for i in range(len(rect) - 1):
             plt.plot([rect[i][0], rect[i + 1][0]], [rect[i][1], rect[i + 1][1]], color='r')
+
+def lines_cross(x1,y1,x2,y2, a1,b1,a2,b2):
+    A1 = y1 - y2
+    B1 = x2 - x1
+    C1 = x1*y2 - x2*y1
+    A2 = b1 - b2
+    B2 = a2 - a1
+    C2 = a1*b2 - a2*b1
+
+    x,y = 0,0
+
+    if B1*A2 - B2*A1 and A1:
+        y = (C2 * A1 - C1 * A2) / (B1 * A2 - B2 * A1)
+        x = (-C1 - B1 * y) / A1
+    elif B1 * A2 - B2 * A1 and A2:
+        y = (C2 * A1 - C1 * A2) / (B1 * A2 - B2 * A1)
+        x = (-C2 - B2 * y) / A2
+
+    return(x,y)
 
 def draw_rect_around(polygon_dots):
     max_x = polygon_dots[0][0]
@@ -98,4 +114,9 @@ for i in range(len(polygon) - 1):
 
 rect.build_field_coverage()
 rect.plot_rect()
+
+z = lines_cross(1, 3.3, 8, 3.3, 1, 4, 4, 2)
+print(z)
+plt.scatter(z[0],z[1])
+
 plt.show()
