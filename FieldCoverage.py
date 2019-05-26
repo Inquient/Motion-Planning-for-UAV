@@ -1,10 +1,15 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.lines
 
 def frange(x, y, jump):
   while x < y:
     yield x
     x += jump
+
+def distance(x1,y1,x2,y2):
+    return np.sqrt(np.power(x2 - x1, 2) +
+                    np.power(y2 - y1, 2))
 
 class line(object):
     def __init__(self, start_dot, end_dot):
@@ -41,30 +46,56 @@ class rectangle(object):
 
     def build_field_coverage(self):
         short_side, long_side = self.get_short_side()
-        print(short_side, long_side)
 
-        route_dots = []
+        start_dots = []
+        end_dots = []
         camera_angle = 1.3
         if short_side[0][0] != short_side[1][0]:
             for i in frange(short_side[0][0]+camera_angle, short_side[0][1], camera_angle):
-                route_dots.append((i, short_side[0][1]))
-                route_dots.append((i, long_side[0][1]))
-                # plt.scatter(i, short_side[0][1], color = 'k')
+                start_dots.append((i, short_side[0][1]))
+                end_dots.append((i, long_side[0][1]))
 
         if short_side[0][1] != short_side[1][1]:
             for i in frange(short_side[0][1]+camera_angle, short_side[1][1], camera_angle):
-                route_dots.append((short_side[0][0], i))
-                route_dots.append((long_side[1][0], i))
-                # plt.scatter(short_side[0][0], i, color = 'k')
+                start_dots.append((short_side[0][0], i))
+                end_dots.append((long_side[1][0], i))
 
-        print(route_dots)
-        for dot in route_dots:
-            plt.scatter(dot[0], dot[1], color = 'k')
+        for dot in start_dots:
+            dot = (round(dot[0],2),round(dot[1],2))
+            # plt.scatter(dot[0], dot[1], color = 'k')
+        for dot in end_dots:
+            dot = (round(dot[0],2),round(dot[1],2))
+            # plt.scatter(dot[0], dot[1], color = 'k')
+
+        result = []
+        for i in range(0,len(start_dots)):
+            result.append(line(start_dots[i],end_dots[i]))
+
+        return result
 
     def plot_rect(self):
         rect = self.get_as_array()
         for i in range(len(rect) - 1):
             plt.plot([rect[i][0], rect[i + 1][0]], [rect[i][1], rect[i + 1][1]], color='r')
+
+class polygon(object):
+    def __init__(self, dots):
+        self.dots = dots
+        self.dots.append(self.dots[0])
+
+    def get_as_array(self):
+        return self.dots
+
+    def get_as_lines(self):
+        lines = []
+        for i in range(0, len(self.dots)-1):
+            lines.append(line(self.dots[i], self.dots[i+1]))
+        return lines
+
+    def plot_poly(self):
+        for i in range(len(self.dots) - 1):
+            plt.plot([self.dots[i][0], self.dots[i + 1][0]], [self.dots[i][1], self.dots[i + 1][1]], color='b')
+            # plt.scatter(self.dots[i][0], self.dots[i][1], color='b')
 
 def lines_cross(x1,y1,x2,y2, a1,b1,a2,b2):
     A1 = y1 - y2
@@ -83,7 +114,14 @@ def lines_cross(x1,y1,x2,y2, a1,b1,a2,b2):
         y = (C2 * A1 - C1 * A2) / (B1 * A2 - B2 * A1)
         x = (-C2 - B2 * y) / A2
 
-    return(x,y)
+    d = distance(a1,b1,a2,b2)
+    d1 = distance(a1,b1,x,y)
+    d2 = distance(a2,b2,x,y)
+
+    if abs((d1+d2)-d) <= 0.01:
+        return (x,y)
+    else:
+        return 0
 
 def draw_rect_around(polygon_dots):
     max_x = polygon_dots[0][0]
@@ -104,19 +142,45 @@ def draw_rect_around(polygon_dots):
     return rectangle((min_x,min_y),(max_x, min_y),(max_x, max_y),(min_x, max_y))
 
 
-polygon = [(1, 4), (4, 2), (4, 4), (8, 6), (4, 7), (4, 9)]
-rect = draw_rect_around(polygon)
+dots = [(1, 4), (4, 2), (4, 4), (16, 4), (24, 7), (24, 19), (17, 19), (8, 23), (6,13), (1,7)]
+rect = draw_rect_around(dots)
 
-polygon.append(polygon[0])
-for i in range(len(polygon) - 1):
-    plt.plot([polygon[i][0], polygon[i + 1][0]], [polygon[i][1], polygon[i + 1][1]], color ='b')
-    plt.scatter(polygon[i][0], polygon[i][1])
+# Точки на описывающем квадрате
+rect_dots = rect.build_field_coverage()
+# for r in rect_dots:
+#     print(r.get_as_array())
 
-rect.build_field_coverage()
-rect.plot_rect()
+# Строим многоугольник из точек
+p = polygon(dots)
+p.plot_poly()
 
-z = lines_cross(1, 3.3, 8, 3.3, 1, 4, 4, 2)
-print(z)
-plt.scatter(z[0],z[1])
+# Получаем многоугольник в виде граней
+p = p.get_as_lines()
+# for l in p:
+#     print(l.get_as_array())
 
+# Ищем точки пересечения каждой грани многоугольника с линиями облёта
+route = []
+for r in rect_dots:
+    for l in p:
+        z = lines_cross(r.start_dot[0], r.start_dot[1], r.end_dot[0], r.end_dot[1],
+                        l.start_dot[0], l.start_dot[1], l.end_dot[0], l.end_dot[1])
+        if z != 0:
+            route.append([round(z[0],2),round(z[1],2)])
+            plt.scatter(round(z[0],2),round(z[1],2),color='red')
+
+# route_start = [dot for dot in route[1::2]]
+# route_end = [dot for dot in route[::2]]
+# print(route)
+
+route_dots = []
+for i in range(0, len(route)-1,2):
+    route_dots.append(line((route[i][0],route[i][1]), (route[i+1][0],route[i+1][1])))
+print(route_dots)
+
+for r in route_dots:
+    plt.plot([r.start_dot[0], r.end_dot[0]], [r.start_dot[1], r.end_dot[1]], marker = 'o', color = 'red')
+
+
+# rect.plot_rect()
 plt.show()
