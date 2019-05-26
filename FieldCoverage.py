@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.lines
+import matplotlib.patches as patches
 
 def frange(x, y, jump):
   while x < y:
@@ -44,19 +45,18 @@ class rectangle(object):
         else:
             return b.get_as_array(), a.get_as_array()
 
-    def build_field_coverage(self):
+    def build_field_coverage(self, camera_angle):
         short_side, long_side = self.get_short_side()
-
+        camera_angle = camera_angle - camera_angle*0.20
         start_dots = []
         end_dots = []
-        camera_angle = 1.3
         if short_side[0][0] != short_side[1][0]:
-            for i in frange(short_side[0][0]+camera_angle, short_side[0][1], camera_angle):
+            for i in frange(short_side[0][0]+camera_angle, short_side[0][1], camera_angle*2):
                 start_dots.append((i, short_side[0][1]))
                 end_dots.append((i, long_side[0][1]))
 
         if short_side[0][1] != short_side[1][1]:
-            for i in frange(short_side[0][1]+camera_angle, short_side[1][1], camera_angle):
+            for i in frange(short_side[0][1]+camera_angle, short_side[1][1], camera_angle*2):
                 start_dots.append((short_side[0][0], i))
                 end_dots.append((long_side[1][0], i))
 
@@ -141,12 +141,14 @@ def draw_rect_around(polygon_dots):
 
     return rectangle((min_x,min_y),(max_x, min_y),(max_x, max_y),(min_x, max_y))
 
+fig,ax = plt.subplots(1)
 
 dots = [(1, 4), (4, 2), (4, 4), (16, 4), (24, 7), (24, 19), (17, 19), (8, 23), (6,13), (1,7)]
 rect = draw_rect_around(dots)
 
 # Точки на описывающем квадрате
-rect_dots = rect.build_field_coverage()
+camera_angle = 1.5
+rect_dots = rect.build_field_coverage(camera_angle)
 # for r in rect_dots:
 #     print(r.get_as_array())
 
@@ -175,10 +177,20 @@ for r in rect_dots:
 
 route_dots = []
 for i in range(0, len(route)-1,2):
+
     route_dots.append(line((route[i][0],route[i][1]), (route[i+1][0],route[i+1][1])))
 print(route_dots)
 
-for r in route_dots:
+rect = patches.Rectangle((route_dots[0].start_dot[0], route_dots[0].start_dot[1]-camera_angle),
+                         route_dots[0].get_line_length(), camera_angle*2,
+                             facecolor='b', alpha=0.1)
+ax.add_patch(rect)
+plt.plot([route_dots[0].start_dot[0], route_dots[0].end_dot[0]],
+         [route_dots[0].start_dot[1], route_dots[0].end_dot[1]], marker='o', color='red')
+for r in route_dots[1:]:
+    rect = patches.Rectangle((r.end_dot[0], r.end_dot[1]-camera_angle), r.get_line_length(), camera_angle*2,
+                             facecolor='b', alpha=0.1)
+    ax.add_patch(rect)
     plt.plot([r.start_dot[0], r.end_dot[0]], [r.start_dot[1], r.end_dot[1]], marker = 'o', color = 'red')
 
 
