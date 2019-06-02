@@ -138,6 +138,11 @@ class Polygon(object):
                      color='b')
             # plt.scatter(self.dots[i][0], self.dots[i][1], color='b')
 
+    def plot_poly_in_3d(self, ax, z_cords):
+        for i in range(len(self.dots) - 1):
+            ax.plot([self.dots[i][0], self.dots[i + 1][0]], [self.dots[i][1], self.dots[i + 1][1]], z_cords,
+                     color='b')
+
 
 # Функция находит точку пересечения двух прямых
 # На вход принимает координаты начальной и конечной точки линии облёта, затем - грани многоугольника
@@ -270,36 +275,64 @@ for i in range(0, len(route), 4):
     route[i + 1] = temp
 
 # Поскольку в нашем распоряжении все маршрутные точки, можно строить сам путь
-
 # 1) RRT-connect
-# my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
-# my_path.draw_multiple_paths_2d(route)
+times = []
+lengths = []
+iterations = []
+experiments = 100
 
+my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
+
+for x in range(0, experiments):
+    t = time.time()
+    lengths.append(my_path.draw_multiple_paths_2d(route))
+    times.append(time.time()-t)
+
+print("Время, для нахождения пути")
+print("Среднее = ", np.average(times))
+print("Min = ", np.min(times))
+print("Max = ", np.max(times))
+print("SD = ", np.std(times))
+
+print("Длинна итогового пути")
+print("Среднее = ", np.average(lengths))
+print("Min = ", np.min(lengths))
+print("Max = ", np.max(lengths))
+print("SD = ", np.std(lengths))
+
+print("Количество узлов, для нахождения пути")
+print("Среднее = ", np.average(iterations))
+print("Min = ", np.min(iterations))
+print("Max = ", np.max(iterations))
+print("SD = ", np.std(iterations))
+
+# 2) Алгоритм Дубинса
 # Трёхмерной пространство для построения
-fig = plt.figure()
-ax = fig.gca(projection='3d')
-ax.set_title("Dubins airplane trajectory")
+# # fig = plt.figure()
+# # ax = fig.gca(projection='3d')
+# # ax.set_title("Dubins airplane trajectory")
+#
+# # p.plot_poly_in_3d(ax, [-1,-1])
+# times = []
+# t = time.time()
+# dubins_path = Dubins_path(10, pi / 4, pi / 3)
+# full_path = dubins_path.compute_dubins_path(route, ax)
+# times.append(time.time()-t)
+# # ax.plot(full_path[:, 0], full_path[:, 1], full_path[:, 2], 'k')
+# length = 0
+# for i in range(0,len(full_path)-1):
+#     length += distance(full_path[i][0], full_path[i][1], full_path[i+1][0], full_path[i+1][1])
+#
+# print("Длинна итогового пути")
+# print(length)
+#
+# print("Время, для нахождения пути")
+# print("Среднее = ", np.average(times))
+# print("Min = ", np.min(times))
+# print("Max = ", np.max(times))
+# print("SD = ", np.std(times))
 
-# Построение пути Дубинса
-dubins_path = Dubins_path(10, pi / 4, pi / 3)
-for i in range(0, len(route) - 1):
-    ax.scatter(route[i][0], route[i][1], 0, color='r')
-    if i % 4 == 0:
-        start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
-        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
-    elif i % 4 == 1:
-        start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
-        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
-    elif i % 4 == 2:
-        start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
-        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
-    else:
-        start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
-        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
-    dubins_path.compute_dubins_path(start_node, end_node, ax)
-
-
-# Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
+# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
 # route_dots = []
 # for i in range(0, len(route)-1,2):
 #     route_dots.append(line((route[i][0],route[i][1]), (route[i+1][0],route[i+1][1])))
@@ -316,25 +349,28 @@ for i in range(0, len(route) - 1):
 #     s += l.get_line_length()
 # print(s)
 
-# Строит сетку для А* и сглаженный путь
-# for i in frange (0,25,0.5):
+# 3) Строит сетку для А* и сглаженный путь
+
+# for i in frange (0, 500, 5):
 #     plt.axvline(x=i, linewidth=0.5, color='k')
 #     plt.axhline(y=i, linewidth=0.5, color='k')
-#     for j in frange (0, 25,0.5):
-#         plt.scatter(i,j,color = 'k', s =2)
+#     for j in frange (0, 500, 5):
+#         plt.scatter(i,j,color = 'k', s = 2)
 #
-# a_star_dots = [(1,3),(5,3),(15,3.5),(21,5.5),(1,5.5),(0.5,8),(25,8),
-# (25,10),(2.5,10),(4.5,12.5),(25,12.5),(25,15),(5,15),
-# (5.5,17.5),(25,17.5),(17.5,20),(6,20),(6.5,22),(10.5,22),]
+# a_star_dots = route
+# # a_star_dots = [(1,3),(5,3),(15,3.5),(21,5.5),(1,5.5),(0.5,8),(25,8),
+# # (25,10),(2.5,10),(4.5,12.5),(25,12.5),(25,15),(5,15),
+# # (5.5,17.5),(25,17.5),(17.5,20),(6,20),(6.5,22),(10.5,22),]
 #
 # a_star_dots = smooth_path(a_star_dots,1)
 # a_star_dots = smooth_path(a_star_dots,5)
 # a_star_dots = interpolate_path(a_star_dots)
 # a_star_dots = interpolate_path(a_star_dots)
 #
+#
 # for i in range(0, len(a_star_dots)-1):
 #     plt.scatter(a_star_dots[i][0],a_star_dots[i][1], color = 'k')
 #     plt.plot([a_star_dots[i][0],a_star_dots[i+1][0]],[a_star_dots[i][1],a_star_dots[i+1][1]],
 #              linewidth=2,color='k')
-
-plt.show()
+#
+# plt.show()

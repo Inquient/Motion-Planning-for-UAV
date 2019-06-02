@@ -26,21 +26,31 @@ class Dubins_path:
         self.Bank_max = Bank_max
         self.Gamma_max = Gamma_max
 
-    def compute_dubins_path(self, start_node, end_node, ax):
-        # full_path = np.empty((0, 3))
-
+    def compute_dubins_path(self, route, ax):
+        full_path = np.empty((0, 3))
         R_min = MinTurnRadius_DubinsAirplane(self.Vairspeed_0, self.Bank_max)
-        DubinsAirplaneSolution1 = DubinsAirplanePath(start_node, end_node, R_min, self.Gamma_max)
 
-        path_dubins_airplane1 = ExtractDubinsAirplanePath(DubinsAirplaneSolution1)
-        path_dubins_airplane1 = path_dubins_airplane1.T
+        for i in range(0, len(route) - 1):
+            # ax.scatter(route[i][0], route[i][1], 0, color='r')
+            if i % 4 == 0:
+                start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
+                end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
+            elif i % 4 == 1:
+                start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
+                end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
+            elif i % 4 == 2:
+                start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
+                end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
+            else:
+                start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
+                end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
 
-        # full_path = np.vstack((full_path, path_dubins_airplane1))
+            DubinsAirplaneSolution1 = DubinsAirplanePath(start_node, end_node, R_min, self.Gamma_max)
+            path_dubins_airplane1 = ExtractDubinsAirplanePath(DubinsAirplaneSolution1)
+            path_dubins_airplane1 = path_dubins_airplane1.T
+            full_path = np.vstack((full_path, path_dubins_airplane1))
 
-        ax.plot(path_dubins_airplane1[:, 0], path_dubins_airplane1[:, 1], path_dubins_airplane1[:, 2], 'k')
-
-        return path_dubins_airplane1
-
+        return full_path
 
 class RRT_path:
     def __init__(self, eps, numnodes, start=(0,0), end=(50,50)):
@@ -164,6 +174,7 @@ class RRT_path:
         start_path.reverse()
         self.path = start_path + goal_path
 
+
     def rrt_3d_path(self):
         random_tree = {}
         current = 0
@@ -280,21 +291,25 @@ class RRT_path:
             plt.plot([self.path[i][0], self.path[i+1][0]], [self.path[i][1], self.path[i+1][1]], [self.path[i][2], self.path[i+1][2]], color = 'r')
 
     def draw_multiple_paths_2d(self, dots):
-        fig, ax = plt.subplots()
+        # fig, ax = plt.subplots()
         full = []
-        for dot in dots:
-            ax.scatter(dot[0], dot[1], color = 'k')
+        len_full = 0
+        # for dot in dots:
+        #     ax.scatter(dot[0], dot[1], color = 'k')
         for i in range(0, len(dots)-1):
             self.start = dots[i]
             self.goal = dots[i+1]
             self.rrt_connect_2d()
+            len_full += self.len_2d_path()
             full.append(self.path)
-        for arr in full:
-            # arr = self.smooth_path(arr)
+
+        return len_full
+        # for arr in full:
+        #     arr = self.smooth_path(arr)
             # arr = self.interpolate_path(arr)
-            for i in range(0, len(arr)-1):
-                plt.plot([arr[i][0], arr[i+1][0]], [arr[i][1], arr[i+1][1]], color = 'r')
-        plt.show()    
+        #     for i in range(0, len(arr)-1):
+        #         plt.plot([arr[i][0], arr[i+1][0]], [arr[i][1], arr[i+1][1]], color = 'r')
+        # plt.show()
         
     def draw_multiple_paths_3d(self, dots):
         fig= plt.figure()
@@ -382,26 +397,27 @@ class RRT_path:
         splines = [scipy.interpolate.UnivariateSpline(distance, cord, k=3, s=.2) for cord in arr.T]
         alpha = np.linspace(0, 1, 75)
         return np.vstack( spl(alpha) for spl in splines ).T
-                   
-            
+
+
 
 if __name__ == "__main__":
-    # my_path = RRT_path(10.0, 10000, (0,0,0), (90,90,0))
-    #
-    # dots = [(0,0,50), (0,90,50), (50,90,50), (50,0,50), (90,0,50), (90,90,50)]
-    # my_path.draw_multiple_paths_3d(dots)
+    my_path = RRT_path(10.0, 10000, (0,0,0), (90,90,0))
 
-    fig = plt.figure()
-    ax = fig.gca(projection='3d')
-    ax.set_title("Dubins airplane trajectory")
+    dots = [(0,0,50), (0,90,50), (50,90,50), (50,0,50), (90,0,50), (90,90,50)]
+    my_path.draw_multiple_paths_3d(dots)
 
-    d_path = Dubins_path(10, pi / 4, pi / 3)
-    d_path.compute_dubins_path(
-        np.array([0,90,50,90*pi/180,15]), np.array([50,90,50,-120*pi/180,15]), ax)
-
-    plt.show()
     # dots = [(0,0), (0,90)]
     # my_path.draw_multiple_paths_2d(dots)
+
+    # fig = plt.figure()
+    # ax = fig.gca(projection='3d')
+    # ax.set_title("Dubins airplane trajectory")
+    #
+    # d_path = Dubins_path(10, pi / 4, pi / 3)
+    # d_path.compute_dubins_path(
+    #     np.array([0,90,50,90*pi/180,15]), np.array([50,90,50,-120*pi/180,15]), ax)
+    #
+    # plt.show()
 
 
     
