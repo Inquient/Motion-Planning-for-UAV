@@ -123,5 +123,3 @@ df = pd.DataFrame(
          'lengths' : lengths,  })
     
 df.to_csv('3D-RRT-connect stats.csv')
-    
-    

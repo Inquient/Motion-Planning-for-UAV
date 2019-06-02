@@ -29,7 +29,7 @@ class RRT_path:
         self.goal = end
         self.path = []
         self.path_length = 0
-        self.VehiclePars = VehicleParameters(15, pi / 4, pi / 3)
+        self.VehiclePars = VehicleParameters(10, pi / 4, pi / 3)
         
     def dist_2d(self, p1, p2):
         return sqrt((p1[0]-p2[0])*(p1[0]-p2[0])+(p1[1]-p2[1])*(p1[1]-p2[1]))
@@ -63,7 +63,7 @@ class RRT_path:
         
         nodes.append(self.start)
         for i in range(self.NUMNODES):
-            rand = random.randrange(lx,rx), random.randrange(by,uy)
+            rand = random.randrange(round(lx),round(rx)), random.randrange(round(by),round(uy))
                 
             cur_node = nodes[0]
             for p in nodes:
@@ -101,7 +101,7 @@ class RRT_path:
         flag = True
         
         for i in range(self.NUMNODES):
-            rand1 = random.randrange(lx,rx), random.randrange(by,uy)
+            rand1 = random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy))
             cur_node1 = start_nodes[0]
             for p in start_nodes:
                 if self.dist_2d(p,rand1) < self.dist_2d(cur_node1,rand1):
@@ -110,7 +110,7 @@ class RRT_path:
             start_nodes.append(newnode)
             start_tree[newnode] = cur_node1
             
-            rand2 = random.randrange(lx,rx), random.randrange(by,uy)
+            rand2 = random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy))
             cur_node2 = goal_nodes[0]
             for p in goal_nodes:
                 if self.dist_2d(p,rand2) < self.dist_2d(cur_node2,rand2):
@@ -267,10 +267,11 @@ class RRT_path:
         for i in range(0, len(dots)-1):
             self.start = dots[i]
             self.goal = dots[i+1]
-            self.rrt_2d_path()
+            self.rrt_connect_2d()
             full.append(self.path)
         for arr in full:
-            arr = self.interpolate_path(arr)
+            # arr = self.smooth_path(arr)
+            # arr = self.interpolate_path(arr)
             for i in range(0, len(arr)-1):
                 plt.plot([arr[i][0], arr[i+1][0]], [arr[i][1], arr[i+1][1]], color = 'r')
         plt.show()    
@@ -362,11 +363,7 @@ class RRT_path:
         alpha = np.linspace(0, 1, 75)
         return np.vstack( spl(alpha) for spl in splines ).T
 
-    def compute_dubins_path(self, start_node, end_node):
-        fig = plt.figure()
-        ax = fig.gca(projection='3d')
-        ax.set_title("Dubins airplane trajectory")
-
+    def compute_dubins_path(self, start_node, end_node, ax):
         # full_path = np.empty((0, 3))
 
         R_min = MinTurnRadius_DubinsAirplane(self.VehiclePars.Vairspeed_0, self.VehiclePars.Bank_max)
@@ -378,7 +375,7 @@ class RRT_path:
         # full_path = np.vstack((full_path, path_dubins_airplane1))
 
         ax.plot(path_dubins_airplane1[:, 0], path_dubins_airplane1[:, 1], path_dubins_airplane1[:, 2], 'k')
-        plt.show()
+
         return path_dubins_airplane1
                    
             
