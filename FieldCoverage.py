@@ -272,30 +272,31 @@ for i in range(0, len(route), 4):
 # Поскольку в нашем распоряжении все маршрутные точки, можно строить сам путь
 
 # 1) RRT-connect
-my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
-my_path.draw_multiple_paths_2d(route)
+# my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
+# my_path.draw_multiple_paths_2d(route)
 
 # Трёхмерной пространство для построения
-# fig = plt.figure()
-# ax = fig.gca(projection='3d')
-# ax.set_title("Dubins airplane trajectory")
+fig = plt.figure()
+ax = fig.gca(projection='3d')
+ax.set_title("Dubins airplane trajectory")
 
 # Построение пути Дубинса
-# for i in range(0, len(route) - 1):
-#     ax.scatter(route[i][0], route[i][1], 0, color='r')
-#     if i % 4 == 0:
-#         start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
-#         end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
-#     elif i % 4 == 1:
-#         start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
-#         end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
-#     elif i % 4 == 2:
-#         start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
-#         end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
-#     else:
-#         start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
-#         end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
-#     my_path.compute_dubins_path(start_node, end_node, ax)
+dubins_path = Dubins_path(10, pi / 4, pi / 3)
+for i in range(0, len(route) - 1):
+    ax.scatter(route[i][0], route[i][1], 0, color='r')
+    if i % 4 == 0:
+        start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
+        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
+    elif i % 4 == 1:
+        start_node = np.array([route[i][0], route[i][1], 0, 0 * pi / 180, 1])
+        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
+    elif i % 4 == 2:
+        start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
+        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 180 * pi / 180, 1])
+    else:
+        start_node = np.array([route[i][0], route[i][1], 0, 180 * pi / 180, 1])
+        end_node = np.array([route[i + 1][0], route[i + 1][1], 0, 0 * pi / 180, 1])
+    dubins_path.compute_dubins_path(start_node, end_node, ax)
 
 
 # Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну

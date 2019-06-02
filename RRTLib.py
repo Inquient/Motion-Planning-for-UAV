@@ -10,15 +10,36 @@ from DubinsAirplaneFunctions import DubinsAirplanePath, MinTurnRadius_DubinsAirp
 
 pi = np.pi
 
-class VehicleParameters(object):
-    """
-        Vehicle Parameters
-    """
+# class VehicleParameters(object):
+#     """
+#         Vehicle Parameters
+#     """
+#
+#     def __init__(self, Vairspeed_0, Bank_max, Gamma_max):
+#         self.Vairspeed_0 = Vairspeed_0
+#         self.Bank_max = Bank_max
+#         self.Gamma_max = Gamma_max
 
+class Dubins_path:
     def __init__(self, Vairspeed_0, Bank_max, Gamma_max):
         self.Vairspeed_0 = Vairspeed_0
         self.Bank_max = Bank_max
         self.Gamma_max = Gamma_max
+
+    def compute_dubins_path(self, start_node, end_node, ax):
+        # full_path = np.empty((0, 3))
+
+        R_min = MinTurnRadius_DubinsAirplane(self.Vairspeed_0, self.Bank_max)
+        DubinsAirplaneSolution1 = DubinsAirplanePath(start_node, end_node, R_min, self.Gamma_max)
+
+        path_dubins_airplane1 = ExtractDubinsAirplanePath(DubinsAirplaneSolution1)
+        path_dubins_airplane1 = path_dubins_airplane1.T
+
+        # full_path = np.vstack((full_path, path_dubins_airplane1))
+
+        ax.plot(path_dubins_airplane1[:, 0], path_dubins_airplane1[:, 1], path_dubins_airplane1[:, 2], 'k')
+
+        return path_dubins_airplane1
 
 
 class RRT_path:
@@ -29,7 +50,6 @@ class RRT_path:
         self.goal = end
         self.path = []
         self.path_length = 0
-        self.VehiclePars = VehicleParameters(10, pi / 4, pi / 3)
         
     def dist_2d(self, p1, p2):
         return sqrt((p1[0]-p2[0])*(p1[0]-p2[0])+(p1[1]-p2[1])*(p1[1]-p2[1]))
@@ -362,32 +382,24 @@ class RRT_path:
         splines = [scipy.interpolate.UnivariateSpline(distance, cord, k=3, s=.2) for cord in arr.T]
         alpha = np.linspace(0, 1, 75)
         return np.vstack( spl(alpha) for spl in splines ).T
-
-    def compute_dubins_path(self, start_node, end_node, ax):
-        # full_path = np.empty((0, 3))
-
-        R_min = MinTurnRadius_DubinsAirplane(self.VehiclePars.Vairspeed_0, self.VehiclePars.Bank_max)
-        DubinsAirplaneSolution1 = DubinsAirplanePath(start_node, end_node, R_min, self.VehiclePars.Gamma_max)
-
-        path_dubins_airplane1 = ExtractDubinsAirplanePath(DubinsAirplaneSolution1)
-        path_dubins_airplane1 = path_dubins_airplane1.T
-
-        # full_path = np.vstack((full_path, path_dubins_airplane1))
-
-        ax.plot(path_dubins_airplane1[:, 0], path_dubins_airplane1[:, 1], path_dubins_airplane1[:, 2], 'k')
-
-        return path_dubins_airplane1
                    
             
 
 if __name__ == "__main__":
-    my_path = RRT_path(10.0, 10000, (0,0,0), (90,90,0))
+    # my_path = RRT_path(10.0, 10000, (0,0,0), (90,90,0))
+    #
+    # dots = [(0,0,50), (0,90,50), (50,90,50), (50,0,50), (90,0,50), (90,90,50)]
+    # my_path.draw_multiple_paths_3d(dots)
 
-    dots = [(0,0,50), (0,90,50), (50,90,50), (50,0,50), (90,0,50), (90,90,50)]
-    my_path.draw_multiple_paths_3d(dots)
+    fig = plt.figure()
+    ax = fig.gca(projection='3d')
+    ax.set_title("Dubins airplane trajectory")
 
-    my_path.compute_dubins_path(
-        np.array([0,90,50,90*pi/180,15]), np.array([50,90,50,-120*pi/180,15]))
+    d_path = Dubins_path(10, pi / 4, pi / 3)
+    d_path.compute_dubins_path(
+        np.array([0,90,50,90*pi/180,15]), np.array([50,90,50,-120*pi/180,15]), ax)
+
+    plt.show()
     # dots = [(0,0), (0,90)]
     # my_path.draw_multiple_paths_2d(dots)
 
