@@ -28,6 +28,14 @@ def remove_duplicates(l):
             n.append(i)
     return n
 
+def get_area(dots):
+    s1 = 0
+    s2 = 0
+    for i in range(0, len(dots) - 1):
+        s1 += dots[i][0] * dots[i + 1][1]
+        s2 += dots[i][1] * dots[i + 1][0]
+    return (s2 - s1) / 2
+
 
 # Класс прямой - линии
 class Line(object):
@@ -76,12 +84,12 @@ class Rectangle(object):
         start_dots = []
         end_dots = []
         if short_side[0][0] != short_side[1][0]:
-            for i in frange(short_side[0][0] + camera_angle, short_side[0][1], camera_angle * 2):
+            for i in frange(short_side[0][0] + camera_angle, short_side[0][1], camera_angle):
                 start_dots.append((i, short_side[0][1]))
                 end_dots.append((i, long_side[0][1]))
 
         if short_side[0][1] != short_side[1][1]:
-            for i in frange(short_side[0][1] + camera_angle, short_side[1][1], camera_angle * 2):
+            for i in frange(short_side[0][1] + camera_angle, short_side[1][1], camera_angle):
                 start_dots.append((short_side[0][0], i))
                 end_dots.append((long_side[1][0], i))
 
@@ -132,11 +140,14 @@ class Polygon(object):
         return (s1 - s2) / 2
 
     # Рисует двухмерный многоугольник - все его грани и точки
-    def plot_poly(self):
+    def plot_poly(self, color):
         for i in range(len(self.dots) - 1):
             plt.plot([self.dots[i][0], self.dots[i + 1][0]], [self.dots[i][1], self.dots[i + 1][1]],
-                     color='b')
-            # plt.scatter(self.dots[i][0], self.dots[i][1], color='b')
+                     color=color)
+            plt.scatter(self.dots[i][0], self.dots[i][1], color=color)
+            plt.annotate('('+str(self.dots[i][0])+', '+ str(self.dots[i][1])+')',
+                         xy=(self.dots[i][0], self.dots[i][1]-15),
+                         color = 'r', style = 'oblique', weight = 'bold')
 
     def plot_poly_in_3d(self, ax, z_cords):
         for i in range(len(self.dots) - 1):
@@ -230,14 +241,14 @@ rect = draw_rect_around(dots)
 # rect.plot_rect()
 
 # Задаём поле зрения камеры и строим линии облёта
-camera_angle = 15.5  # В данном случае он равен 15.5, значить ширина одной полосы - 15.5 метров
+camera_angle = 31.0  # В данном случае он равен 15.5, значить ширина одной полосы - 15.5 метров
 flight_lines = rect.build_field_coverage(camera_angle)
 
 # Строим многоугольник из точек и рисуем его
 p = Polygon(dots)
 poly_area = p.get_area()
 print(poly_area)  # Получаем площадь многоугольника
-p.plot_poly()
+p.plot_poly('b')
 
 # Получаем многоугольник в виде граней
 poly_lines = p.get_as_lines()
@@ -251,7 +262,7 @@ for f_line in flight_lines:
         # Если пересечение существует, добавляем его в список маршрутных точек и рисуем
         if cross_dot != 0:
             route.append([round(cross_dot[0], 2), round(cross_dot[1], 2)])
-            plt.scatter(round(cross_dot[0], 2), round(cross_dot[1], 2), color='red')
+            # plt.scatter(round(cross_dot[0], 2), round(cross_dot[1], 2), color='red')
 
 # В сложных многоугольниках может существовать несколько пересечений на одной линии облёта
 # Нам нужно всего два - первое на линии и последнее, поэтому:
@@ -268,6 +279,36 @@ for i in range(0, len(route) - 3):
 # Удаляем дублирующие точки на пересечениях с гранями
 route = remove_duplicates(route)
 
+# Запретные зоны
+# p1 = Polygon([(150,100),(150,200),(220,210),(220,170),(180,120),])
+# p2 = Polygon([(262.5,320),(262.5,410),(325,350),])
+# p1.plot_poly('r')
+# p2.plot_poly('r')
+# rect1 = patches.Polygon(p1.get_as_array(), facecolor='r', alpha=0.3)
+# rect2 = patches.Polygon(p2.get_as_array(), facecolor='r', alpha=0.3)
+# ax.add_patch(rect1)
+# ax.add_patch(rect2)
+
+# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
+# route_lines = []
+# for i in range(0, len(route)-1,2):
+#     route_lines.append(Line((route[i][0], route[i][1]), (route[i + 1][0], route[i + 1][1])))
+# print(route_lines)
+#
+# covered_area = 0
+# for r in route_lines:
+#     rect = patches.Rectangle((r.end_dot[0], r.end_dot[1]-camera_angle/2), r.get_line_length(), camera_angle,
+#                              facecolor='b', alpha=0.1)
+#     covered_area += r.get_line_length() * (camera_angle - camera_angle*0.2)
+#     ax.add_patch(rect)
+#     plt.plot([r.start_dot[0], r.end_dot[0]], [r.start_dot[1], r.end_dot[1]], marker = 'o', color = 'red')
+#
+# s=0
+# for l in route_lines:
+#     s += l.get_line_length()
+# print(s)
+# print(covered_area)
+
 # Выстраиваем точки в правильном порядке
 for i in range(0, len(route), 4):
     temp = route[i]
@@ -276,49 +317,52 @@ for i in range(0, len(route), 4):
 
 # Поскольку в нашем распоряжении все маршрутные точки, можно строить сам путь
 # 1) RRT-connect
-times = []
-lengths = []
-iterations = []
-experiments = 100
+# times = []
+# lengths = []
+# iterations = []
+# experiments = 100
 
-my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
+# my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
+# my_path.draw_multiple_paths_2d(route, fig, ax)
 
-for x in range(0, experiments):
-    t = time.time()
-    lengths.append(my_path.draw_multiple_paths_2d(route))
-    times.append(time.time()-t)
-
-print("Время, для нахождения пути")
-print("Среднее = ", np.average(times))
-print("Min = ", np.min(times))
-print("Max = ", np.max(times))
-print("SD = ", np.std(times))
-
-print("Длинна итогового пути")
-print("Среднее = ", np.average(lengths))
-print("Min = ", np.min(lengths))
-print("Max = ", np.max(lengths))
-print("SD = ", np.std(lengths))
-
-print("Количество узлов, для нахождения пути")
-print("Среднее = ", np.average(iterations))
-print("Min = ", np.min(iterations))
-print("Max = ", np.max(iterations))
-print("SD = ", np.std(iterations))
+# for x in range(0, experiments):
+#     t = time.time()
+#     cur_len, cur_iter =  my_path.draw_multiple_paths_2d(route)
+#     lengths.append(cur_len)
+#     iterations.append(sum(cur_iter))
+#     times.append(time.time()-t)
+#
+# print("Время, для нахождения пути")
+# print("Среднее = ", np.average(times))
+# print("Min = ", np.min(times))
+# print("Max = ", np.max(times))
+# print("SD = ", np.std(times))
+#
+# print("Длинна итогового пути")
+# print("Среднее = ", np.average(lengths))
+# print("Min = ", np.min(lengths))
+# print("Max = ", np.max(lengths))
+# print("SD = ", np.std(lengths))
+#
+# print("Количество узлов, для нахождения пути")
+# print("Среднее = ", np.average(iterations))
+# print("Min = ", np.min(iterations))
+# print("Max = ", np.max(iterations))
+# print("SD = ", np.std(iterations))
 
 # 2) Алгоритм Дубинса
 # Трёхмерной пространство для построения
-# # fig = plt.figure()
-# # ax = fig.gca(projection='3d')
-# # ax.set_title("Dubins airplane trajectory")
-#
-# # p.plot_poly_in_3d(ax, [-1,-1])
+# fig = plt.figure()
+# ax = fig.gca(projection='3d')
+# ax.set_title("Dubins airplane trajectory")
+
+# p.plot_poly_in_3d(ax, [-1,-1])
 # times = []
 # t = time.time()
 # dubins_path = Dubins_path(10, pi / 4, pi / 3)
 # full_path = dubins_path.compute_dubins_path(route, ax)
 # times.append(time.time()-t)
-# # ax.plot(full_path[:, 0], full_path[:, 1], full_path[:, 2], 'k')
+# ax.plot(full_path[:, 0], full_path[:, 1], 'k')
 # length = 0
 # for i in range(0,len(full_path)-1):
 #     length += distance(full_path[i][0], full_path[i][1], full_path[i+1][0], full_path[i+1][1])
@@ -332,45 +376,87 @@ print("SD = ", np.std(iterations))
 # print("Max = ", np.max(times))
 # print("SD = ", np.std(times))
 
-# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
-# route_dots = []
-# for i in range(0, len(route)-1,2):
-#     route_dots.append(line((route[i][0],route[i][1]), (route[i+1][0],route[i+1][1])))
-# print(route_dots)
-
-# for r in route_dots:
-#     rect = patches.Rectangle((r.end_dot[0], r.end_dot[1]-camera_angle), r.get_line_length(), camera_angle*2,
-#                              facecolor='b', alpha=0.1)
-#     ax.add_patch(rect)
-#     plt.plot([r.start_dot[0], r.end_dot[0]], [r.start_dot[1], r.end_dot[1]], marker = 'o', color = 'red')
-#
-# s=0
-# for l in route_dots:
-#     s += l.get_line_length()
-# print(s)
-
 # 3) Строит сетку для А* и сглаженный путь
 
-# for i in frange (0, 500, 5):
-#     plt.axvline(x=i, linewidth=0.5, color='k')
-#     plt.axhline(y=i, linewidth=0.5, color='k')
-#     for j in frange (0, 500, 5):
-#         plt.scatter(i,j,color = 'k', s = 2)
-#
+for i in frange (0, 550, 20):
+    plt.axvline(x=i, linewidth=0.5, color='k')
+    plt.axhline(y=i, linewidth=0.5, color='k')
+    for j in frange (0, 550, 20):
+        plt.scatter(i,j,color = 'k', s = 2)
+
 # a_star_dots = route
-# # a_star_dots = [(1,3),(5,3),(15,3.5),(21,5.5),(1,5.5),(0.5,8),(25,8),
-# # (25,10),(2.5,10),(4.5,12.5),(25,12.5),(25,15),(5,15),
-# # (5.5,17.5),(25,17.5),(17.5,20),(6,20),(6.5,22),(10.5,22),]
-#
+# a_star_dots = []
+# for i in range(0, len(route)-1):
+#     a_star_dots.append(route[i])
+#     if i%3 == 0:
+#         a_star_dots.append()
+
+# t = time.time()
 # a_star_dots = smooth_path(a_star_dots,1)
-# a_star_dots = smooth_path(a_star_dots,5)
+# a_star_dots = smooth_path(a_star_dots,2)
 # a_star_dots = interpolate_path(a_star_dots)
-# a_star_dots = interpolate_path(a_star_dots)
+# # a_star_dots = interpolate_path(a_star_dots)
+# t = time.time() - t
+# print("Время, для нахождения пути = ", t)
 #
-#
+# a_star_len = 0
+# covered_area = 0
 # for i in range(0, len(a_star_dots)-1):
 #     plt.scatter(a_star_dots[i][0],a_star_dots[i][1], color = 'k')
+#     a_star_len += distance(a_star_dots[i][0], a_star_dots[i][1],a_star_dots[i+1][0], a_star_dots[i+1][1])
 #     plt.plot([a_star_dots[i][0],a_star_dots[i+1][0]],[a_star_dots[i][1],a_star_dots[i+1][1]],
 #              linewidth=2,color='k')
+#     p = [[a_star_dots[i][0], a_star_dots[i][1] + 15.5], [a_star_dots[i + 1][0], a_star_dots[i + 1][1] + 15.5],
+#          [a_star_dots[i + 1][0], a_star_dots[i + 1][1] - 15.5], [a_star_dots[i][0], a_star_dots[i][1] - 15.5], ]
+#     rect = patches.Polygon(p, facecolor='b', alpha=0.1)
+#     covered_area += get_area(p)
+#     ax.add_patch(rect)
 #
-# plt.show()
+# print("Длинна итогового пути",a_star_len)
+# print('Площадь покрытия = ', covered_area)
+#
+# 4) Потенцыальное поле
+# obstacles = np.array(((272.5,73.5),(274.5,73.5),(270.5,73.5),(268.5,73.5),(276.5,73.5),
+#                       (286,80),(288,80),(290,80),(292,80),(294,80),
+#                       (80,107),(82,107),(78,107),
+#                       (445,132),(440,132),(435,132),(430,132),
+#                       (50,148),
+#                       (512,171),
+#                       (88,200),
+#                       (512,221),
+#                       (101,248),
+#                       (457,275),
+#                       (84,299),
+#                       (411,322),
+#                       (124,350),
+#                       (411,372),
+#                       (261,397),
+#                       (396,423),
+#                       (280,448),
+#                       (321,474),))
+# poten_path = Potential_field_path(route, obstacles)
+# t = time.time()
+# full_path = poten_path.compute_potential_path()
+# t = time.time()-t
+#
+# print("Время, для нахождения пути = ", t)
+# print("Количество итераций, для нахождения пути = ", poten_path.iterations)
+# print("Длинна итогового пути", poten_path.path_length)
+#
+# for dot in obstacles:
+#     plt.scatter(dot[0], dot[1], color = 'r')
+#
+# covered_area = 0
+# for dot in full_path:
+#     plt.scatter(dot[0],dot[1], color = 'k', s=3)
+#     # rect = patches.Rectangle((dot[0]-1,dot[1]-camera_angle/2),2,camera_angle,facecolor='b', alpha=0.1)
+#     covered_area += camera_angle * 2
+#     # ax.add_patch(rect)
+# print('Площадь покрытия = ', covered_area)
+
+# 5) RRT-Dubins
+# rrt_dubins_path = RRT_Dubins_path(3, pi / 4, pi / 3, 10000, 40.0)
+# full_path = rrt_dubins_path.draw_multiple_paths_2d(route, fig, ax)
+# ax.plot(full_path[:, 0], full_path[:, 1], 'k')
+
+plt.show()

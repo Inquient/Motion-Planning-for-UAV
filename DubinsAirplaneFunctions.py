@@ -561,7 +561,11 @@ def DubinsAirplanePath(init_conf=None, final_conf=None, R_min=None, gamma_max=No
         elif idx == 2: # right-straight-left
             ell = np.linalg.norm(cle[0:2] - crs[0:2],ord=2)
             theta = atan2(cle[1]-crs[1], cle[0]-crs[0])
-            theta2 = theta - pi/2 + asin(2*R/ell)
+            theta2 = (-1.5)
+            try:
+                theta2 = theta - pi/2 + asin(2*R/ell)
+            except:
+                print(theta)
             dist1 = R*fmod(2*pi+fmod(theta2,2*pi)-fmod(anglstart-pi/2,2*pi),2*pi) + 2*pi*R*DubinsAirplaneSolution['k_s']
             dist2 = R*fmod(2*pi+fmod(theta2+pi,2*pi)-fmod(anglend+pi/2,2*pi),2*pi) + 2*pi*R*DubinsAirplaneSolution['k_e']
             w1 = crs + R*np.dot(rotz(theta2), e1.T).T + np.array([0, 0, -dist1*tan(gam)]).T
