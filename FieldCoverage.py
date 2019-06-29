@@ -36,6 +36,11 @@ def get_area(dots):
         s2 += dots[i][1] * dots[i + 1][0]
     return (s2 - s1) / 2
 
+class Dot(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
 
 # Класс прямой - линии
 class Line(object):
