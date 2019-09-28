@@ -69,18 +69,18 @@ class Rectangle(object):
 
         short_side, long_side = self.get_short_side()
 
-        camera_angle = camera_angle - camera_angle * 0.20
+        stripe_width = camera_angle - camera_angle * 0.20
 
         start_dots = []
         end_dots = []
 
         if short_side.start_dot.x != short_side.end_dot.x:
-            for i in frange(short_side.start_dot.x  + camera_angle, short_side.end_dot.x, camera_angle):
+            for i in frange(short_side.start_dot.x + stripe_width, short_side.end_dot.x, stripe_width):
                 start_dots.append(Dot(i, short_side.start_dot.y))
                 end_dots.append(Dot(i, long_side.start_dot.y))
 
         if short_side.start_dot.y != short_side.end_dot.y:
-            for i in frange(short_side.start_dot.y + camera_angle, short_side.end_dot.y, camera_angle):
+            for i in frange(short_side.start_dot.y + stripe_width, short_side.end_dot.y, stripe_width):
                 start_dots.append(Dot(short_side.start_dot.x, i))
                 end_dots.append(Dot(long_side.end_dot.x, i))
 
@@ -132,14 +132,15 @@ class Polygon(object):
 
     # Рисует двухмерный многоугольник - все его грани и точки
     # Для кооректной работы этого метода требуется инициализировать в matplotlib двухмернй пространство
-    def plot_poly(self, color):
+    def plot_poly(self, color, annotate):
         for i in range(len(self.dots) - 1):
             plt.plot([self.dots[i].x, self.dots[i + 1].x], [self.dots[i].y, self.dots[i + 1].y],
                      color=color)
             plt.scatter(self.dots[i].x, self.dots[i].y, color=color)
-            plt.annotate('('+str(self.dots[i].x)+', '+ str(self.dots[i].y)+')',
-                         xy=(self.dots[i].x, self.dots[i].y-15),
-                         color = 'r', style = 'oblique', weight = 'bold')
+            if annotate:
+                plt.annotate('('+str(self.dots[i].x)+', '+ str(self.dots[i].y)+')',
+                             xy=(self.dots[i].x, self.dots[i].y-15),
+                             color = 'r', style = 'oblique', weight = 'bold')
 
 # Функция рисует прямоугольник вокруг многоугольника
 # Принимает объект типа Многоугольник
@@ -163,13 +164,13 @@ def draw_rect_around(polygon):
     return Rectangle(Dot(min_x, min_y), Dot(max_x, min_y), Dot(max_x, max_y), Dot(min_x, max_y))
 
 # Функция находит точку пересечения двух прямых
-def lines_cross(f_line, p_edge):
-    A1 = f_line.start_dot.y - f_line.end_dot.y
-    B1 = f_line.end_dot.x - f_line.start_dot.x
-    C1 = f_line.start_dot.x * f_line.end_dot.y - f_line.end_dot.x * f_line.start_dot.y
-    A2 = p_edge.start_dot.y - p_edge.end_dot.y
-    B2 = p_edge.end_dot.x - p_edge.start_dot.x
-    C2 = p_edge.start_dot.x * p_edge.end_dot.y - p_edge.end_dot.x * p_edge.start_dot.y
+def lines_cross(line_1, line_2):
+    A1 = line_1.start_dot.y - line_1.end_dot.y
+    B1 = line_1.end_dot.x - line_1.start_dot.x
+    C1 = line_1.start_dot.x * line_1.end_dot.y - line_1.end_dot.x * line_1.start_dot.y
+    A2 = line_2.start_dot.y - line_2.end_dot.y
+    B2 = line_2.end_dot.x - line_2.start_dot.x
+    C2 = line_2.start_dot.x * line_2.end_dot.y - line_2.end_dot.x * line_2.start_dot.y
 
     x, y = 0, 0
 
@@ -180,9 +181,9 @@ def lines_cross(f_line, p_edge):
         y = (C2 * A1 - C1 * A2) / (B1 * A2 - B2 * A1)
         x = (-C2 - B2 * y) / A2
 
-    d = p_edge.get_line_length()
-    d1 = distance(p_edge.start_dot.x, p_edge.start_dot.y, x, y)
-    d2 = distance(p_edge.end_dot.x, p_edge.end_dot.y, x, y)
+    d = line_2.get_line_length()
+    d1 = distance(line_2.start_dot.x, line_2.start_dot.y, x, y)
+    d2 = distance(line_2.end_dot.x, line_2.end_dot.y, x, y)
 
     # Если найденная точка лежит на грани многоугольника, то возвращаем её, иначе - 0
     if abs((d1 + d2) - d) <= 0.01:

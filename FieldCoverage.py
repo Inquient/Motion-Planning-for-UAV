@@ -40,6 +40,14 @@ def smooth_path(arr, rank):
     alpha = np.linspace(0, 1, 75)
     return np.vstack(spl(alpha) for spl in splines).T
 
+# Функция позволяет нарисовать координатную сетку в заданном диапазоне
+def draw_coordinate_net(range_start, range_end, step):
+    for i in frange(range_start, range_end, step):
+        plt.axvline(x=i, linewidth=0.5, color='k')
+        plt.axhline(y=i, linewidth=0.5, color='k')
+        for j in frange(range_start, range_end, step):
+            plt.scatter(i, j, color='k', s=2)
+
 
 # Задаём двухмерное пространство
 fig, ax = plt.subplots(1)
@@ -63,7 +71,7 @@ flight_lines = rect.build_field_coverage(camera_angle)
 # Строим многоугольник из точек и рисуем его
 poly_area = p.get_area()
 print(poly_area)  # Получаем площадь многоугольника
-p.plot_poly('b')
+p.plot_poly('b', True)
 
 # Получаем многоугольник в виде граней
 poly_lines = p.get_as_lines()
@@ -94,6 +102,14 @@ for i in range(0, len(route) - 3):
 # Удаляем дублирующие точки на пересечениях с гранями
 route = remove_duplicates(route)
 
+# Выстраиваем точки в правильном порядке
+for i in range(0, len(route), 4):
+    temp = route[i]
+    route[i] = route[i + 1]
+    route[i + 1] = temp
+
+draw_coordinate_net(0, 550, 20)
+
 # Запретные зоны
 # p1 = Polygon([(150,100),(150,200),(220,210),(220,170),(180,120),])
 # p2 = Polygon([(262.5,320),(262.5,410),(325,350),])
@@ -123,12 +139,6 @@ route = remove_duplicates(route)
 #     s += l.get_line_length()
 # print(s)
 # print(covered_area)
-
-# Выстраиваем точки в правильном порядке
-for i in range(0, len(route), 4):
-    temp = route[i]
-    route[i] = route[i + 1]
-    route[i + 1] = temp
 
 # Поскольку в нашем распоряжении все маршрутные точки, можно строить сам путь
 # 1) RRT-connect
@@ -192,13 +202,6 @@ for i in range(0, len(route), 4):
 # print("SD = ", np.std(times))
 
 # 3) Строит сетку для А* и сглаженный путь
-
-for i in frange (0, 550, 20):
-    plt.axvline(x=i, linewidth=0.5, color='k')
-    plt.axhline(y=i, linewidth=0.5, color='k')
-    for j in frange (0, 550, 20):
-        plt.scatter( i, j, color = 'k', s = 2)
-
 # a_star_dots = route
 # a_star_dots = []
 # for i in range(0, len(route)-1):
