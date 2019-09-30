@@ -41,6 +41,9 @@ class Line(object):
     def get_as_array(self):
         return [self.start_dot.to_array(), self.end_dot.to_array()]
 
+    def plot_line(self):
+        plt.plot([self.start_dot.x, self.end_dot.x], [self.start_dot.y, self.end_dot.y], color = 'k')
+
 # Класс Прямоугольник, состоит из четырёх точек
 class Rectangle(object):
     def __init__(self, left_bottom_dot, right_bottom_dot, right_top_dot, left_top_dot):
@@ -64,7 +67,7 @@ class Rectangle(object):
         else:
             return b, a
 
-    # Строит в прямоугольнике предполагаемые линии облёта
+    # Возвращает список линий облёта в данном прямоугольнике
     def build_field_coverage(self, camera_angle):
 
         short_side, long_side = self.get_short_side()
@@ -163,6 +166,13 @@ def draw_rect_around(polygon):
     # Возвращает двухмерный прямоугольник
     return Rectangle(Dot(min_x, min_y), Dot(max_x, min_y), Dot(max_x, max_y), Dot(min_x, max_y))
 
+def is_line_cross_horiz_line(line, horiz_line):
+    if horiz_line.start_dot.y > line.start_dot.y and horiz_line.start_dot.y < line.end_dot.y:
+        return True
+    elif horiz_line.start_dot.y < line.start_dot.y and horiz_line.start_dot.y > line.end_dot.y:
+        return True
+    else: return False
+
 # Функция находит точку пересечения двух прямых
 def lines_cross(line_1, line_2):
     A1 = line_1.start_dot.y - line_1.end_dot.y
@@ -190,10 +200,3 @@ def lines_cross(line_1, line_2):
         return (x, y)
     else:
         return 0
-
-
-# poly = Polygon([Dot(1, 4), Dot(5, 3), Dot(6, 8)])
-# # poly.plot_poly('b')
-# # rect = draw_rect_around(poly)
-# # rect.plot_rect()
-# # plt.show()
