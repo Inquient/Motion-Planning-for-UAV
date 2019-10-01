@@ -87,23 +87,18 @@ p = Polygon([Dot(150, 37.5), Dot(300, 75), Dot(300, 150),
                 Dot(150, 375), Dot(75, 300),
                 Dot(112.5, 225), Dot(37.5, 150), ])
 
+# Задаём поле зрения камеры и строим линии облёта
+camera_angle = 31.0  # В данном случае он равен 15.5, значить ширина одной полосы - 15.5 метров
+# Строим прямоугольник вокруг заданного многоугольника
+rect = draw_rect_around(p)
+flight_lines = rect.build_field_coverage(camera_angle)
+route = build_route_dots_for_field(flight_lines, p)
+
 # Отрисовываем заданный многоугольник
 p.plot_poly('b', True)
 
-# Строим прямоугольник вокруг заданного многоугольника
-rect = draw_rect_around(p)
-
-# Задаём поле зрения камеры и строим линии облёта
-camera_angle = 31.0  # В данном случае он равен 15.5, значить ширина одной полосы - 15.5 метров
-flight_lines = rect.build_field_coverage(camera_angle)
-
-# # Получаем многоугольник в виде граней
-# poly_lines = p.get_as_lines()
-
 for line in flight_lines:
     line.plot_line()
-
-route = build_route_dots_for_field(flight_lines, p)
 
 for dot in route:
     plt.scatter(dot[0], dot[1], color='red')
