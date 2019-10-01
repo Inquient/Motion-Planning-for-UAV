@@ -166,13 +166,6 @@ def draw_rect_around(polygon):
     # Возвращает двухмерный прямоугольник
     return Rectangle(Dot(min_x, min_y), Dot(max_x, min_y), Dot(max_x, max_y), Dot(min_x, max_y))
 
-def is_line_cross_horiz_line(line, horiz_line):
-    if horiz_line.start_dot.y > line.start_dot.y and horiz_line.start_dot.y < line.end_dot.y:
-        return True
-    elif horiz_line.start_dot.y < line.start_dot.y and horiz_line.start_dot.y > line.end_dot.y:
-        return True
-    else: return False
-
 # Функция находит точку пересечения двух прямых
 def lines_cross(line_1, line_2):
     A1 = line_1.start_dot.y - line_1.end_dot.y
@@ -197,6 +190,6 @@ def lines_cross(line_1, line_2):
 
     # Если найденная точка лежит на грани многоугольника, то возвращаем её, иначе - 0
     if abs((d1 + d2) - d) <= 0.01:
-        return (x, y)
+        return Dot(x, y)
     else:
         return 0

@@ -48,6 +48,31 @@ def draw_coordinate_net(range_start, range_end, step):
         for j in frange(range_start, range_end, step):
             plt.scatter(i, j, color='k', s=2)
 
+# Возвращает маршрутные точки для облёта поля традиционным способом
+# Принимает на вход список линий облёта и поле, для которого они были построены
+def build_route_dots_for_field(flight_lines, field_polygon):
+    # Представим многоугольник в виде списка его линий
+    poly_lines = field_polygon.get_as_lines()
+
+    route = []
+    # Для каждой линии облёта найдём все её пересечения с линиями многоугольника
+    for f_line in flight_lines:
+        cross_cords = [[], []]
+        for p_edge in poly_lines:
+            # Находим точку пересечения
+            cross_dot = lines_cross(f_line, p_edge)
+            # Если точка пересечения существует, сохраняем её координаты в список
+            # Отдельные списки для x и y координат
+            if cross_dot != 0:
+                cross_cords[0].append(round(cross_dot.x, 2))
+                cross_cords[1].append(round(cross_dot.y, 2))
+        # Маршрутных точек будет всего две, вне зависимости от количества пересечений
+        # Так как это точки выхода с поля. Их коодинаты:
+        route.append([max(cross_cords[0]), max(cross_cords[1])])
+        route.append([min(cross_cords[0]), max(cross_cords[1])])
+
+    return route
+
 
 # Задаём двухмерное пространство
 fig, ax = plt.subplots(1)
@@ -72,37 +97,16 @@ rect = draw_rect_around(p)
 camera_angle = 31.0  # В данном случае он равен 15.5, значить ширина одной полосы - 15.5 метров
 flight_lines = rect.build_field_coverage(camera_angle)
 
-# Получаем многоугольник в виде граней
-poly_lines = p.get_as_lines()
+# # Получаем многоугольник в виде граней
+# poly_lines = p.get_as_lines()
 
 for line in flight_lines:
     line.plot_line()
 
-# Ищем точки пересечения каждой линии облёта с гранями многоугольника
-# Именно это и будут наши маршрутные точки, добавляем их в отдельный список
-route = []
-for f_line in flight_lines:
-    for p_edge in poly_lines:
-        cross_dot = lines_cross(f_line, p_edge)
-        # Если пересечение существует, добавляем его в список маршрутных точек и рисуем
-        if cross_dot != 0:
-            route.append([round(cross_dot[0], 2), round(cross_dot[1], 2)])
-            # plt.scatter(round(cross_dot[0], 2), round(cross_dot[1], 2), color='red')
+route = build_route_dots_for_field(flight_lines, p)
 
-# В сложных многоугольниках может существовать несколько пересечений на одной линии облёта
-# Нам нужно всего два - первое на линии и последнее, поэтому:
-# Находим лишние точки и заменяем их первой точкой на данной линии
-for i in range(0, len(route) - 3):
-    y = route[i][1]
-    x = route[i][0]
-    if route[i + 2][1] == y and route[i + 1][0] > x:
-        route[i] = route[i + 2]
-        route[i + 1] = route[i + 2]
-    if route[i + 2][1] == y and route[i + 1][0] < x:
-        route[i + 1] = route[i]
-        route[i + 2] = route[i]
-# Удаляем дублирующие точки на пересечениях с гранями
-route = remove_duplicates(route)
+for dot in route:
+    plt.scatter(dot[0], dot[1], color='red')
 
 # Выстраиваем точки в правильном порядке
 for i in range(0, len(route), 4):
