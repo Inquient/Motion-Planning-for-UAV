@@ -9,6 +9,7 @@ import matplotlib.patches as patches
 from numpy.linalg import norm
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.interpolate
+from Geometry import dist_between_dots, Dot
 from DubinsAirplaneFunctions import DubinsAirplanePath, MinTurnRadius_DubinsAirplane, ExtractDubinsAirplanePath
 
 pi = np.pi
@@ -318,11 +319,11 @@ class RRT_path:
         return sqrt((p1[0]-p2[0])*(p1[0]-p2[0])+(p1[1]-p2[1])*(p1[1]-p2[1])+(p1[2]-p2[2])*(p1[2]-p2[2]))
     
     def step_from_to_2d(self, p1, p2):
-        if self.dist_2d(p1,p2) < self.EPSILON:
+        if dist_between_dots(p1,p2) < self.EPSILON:
             return p2
         else:
-            theta = atan2(p2[1]-p1[1],p2[0]-p1[0])
-            p1 = p1[0] + self.EPSILON*cos(theta), p1[1] + self.EPSILON*sin(theta)
+            theta = atan2(p2.y-p1.y,p2.x-p1.x)
+            p1 = Dot(p1.x + self.EPSILON*cos(theta), p1.y + self.EPSILON*sin(theta))
             return p1
         
     def step_from_to_3d(self, p1, p2):
@@ -382,19 +383,19 @@ class RRT_path:
         flag = True
         
         for i in range(self.NUMNODES):
-            rand1 = random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy))
+            rand1 = Dot(random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy)))
             cur_node1 = start_nodes[0]
             for p in start_nodes:
-                if self.dist_2d(p,rand1) < self.dist_2d(cur_node1,rand1):
+                if dist_between_dots(p,rand1) < dist_between_dots(cur_node1,rand1):
                     cur_node1 = p
             newnode = self.step_from_to_2d(cur_node1,rand1)
             start_nodes.append(newnode)
             start_tree[newnode] = cur_node1
             
-            rand2 = random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy))
+            rand2 = Dot(random.randrange(round(lx), round(rx)), random.randrange(round(by), round(uy)))
             cur_node2 = goal_nodes[0]
             for p in goal_nodes:
-                if self.dist_2d(p,rand2) < self.dist_2d(cur_node2,rand2):
+                if dist_between_dots(p,rand2) < dist_between_dots(cur_node2,rand2):
                     cur_node2 = p
             newnode = self.step_from_to_2d(cur_node2,rand2)
             goal_nodes.append(newnode)
@@ -402,7 +403,7 @@ class RRT_path:
 
             for a in start_nodes:
                 for b in goal_nodes:
-                    if self.dist_2d(a, b) < self.EPSILON:
+                    if dist_between_dots(a, b) < self.EPSILON:
                         current1 = a
                         current2 = b
                         iterations += (i*2)
@@ -550,35 +551,35 @@ class RRT_path:
             s2 += dots[i][1] * dots[i + 1][0]
         return (s2 - s1) / 2
 
-    def draw_multiple_paths_2d(self, dots, fig, ax):
+    def draw_multiple_paths_2d(self, route_dots, fig, ax):
         # fig, ax = plt.subplots()
         full = []
         len_full = 0
         iterations = []
-        for dot in dots:
-            ax.scatter(dot[0], dot[1], color = 'k')
-        for i in range(0, len(dots)-1):
-            self.start = dots[i]
-            self.goal = dots[i+1]
+        # for dot in dots:
+        #     ax.scatter(dot[0], dot[1], color = 'k')
+        for i in range(0, len(route_dots) - 1):
+            self.start = route_dots[i]
+            self.goal = route_dots[i + 1]
             iterations.append(self.rrt_connect_2d())
-            len_full += self.len_2d_path()
+            # len_full += self.len_2d_path()
             full.append(self.path)
 
-        covered_area = 0
+        # covered_area = 0
         # return len_full, iterations
         for arr in full:
             # arr = self.smooth_path(arr)
             # arr = self.interpolate_path(arr)
             for i in range(0, len(arr)-1):
-                plt.plot([arr[i][0], arr[i+1][0]], [arr[i][1], arr[i+1][1]], color = 'r')
-                p = [[arr[i][0],arr[i][1]+15.5],[arr[i+1][0],arr[i+1][1]+15.5],
-                     [arr[i+1][0],arr[i+1][1]-15.5],[arr[i][0],arr[i][1]-15.5],]
-                rect = patches.Polygon(p, facecolor='b', alpha=0.1)
-                covered_area += self.get_area(p)
-                ax.add_patch(rect)
+                plt.plot([arr[i].x, arr[i+1].x], [arr[i].y, arr[i+1].y], color = 'r')
+                # p = [[arr[i][0],arr[i][1]+15.5],[arr[i+1][0],arr[i+1][1]+15.5],
+                #      [arr[i+1][0],arr[i+1][1]-15.5],[arr[i][0],arr[i][1]-15.5],]
+                # rect = patches.Polygon(p, facecolor='b', alpha=0.1)
+                # covered_area += self.get_area(p)
+                # ax.add_patch(rect)
 
-        print(covered_area)
-        # plt.show()
+        # print(covered_area)
+        plt.show()
         
     def draw_multiple_paths_3d(self, dots):
         fig= plt.figure()
@@ -601,53 +602,53 @@ class RRT_path:
         
     def direction_check(self):
         zazor = 25
-        if((self.start[0] > self.goal[0]) and (self.start[1] == self.goal[1])):
-            lx = self.goal[0]-zazor
-            rx = self.start[0]
-            by = self.start[1]-zazor 
-            uy = self.start[1]+zazor
+        if((self.start.x > self.goal.x) and (self.start.y == self.goal.y)):
+            lx = self.goal.x-zazor
+            rx = self.start.x
+            by = self.start.y-zazor
+            uy = self.start.y+zazor
             
-        if((self.start[0] > self.goal[0]) and (self.start[1] < self.goal[1])):
-            lx = self.goal[0]-zazor
-            rx = self.start[0]
-            by = self.start[1]  
-            uy = self.goal[1]+zazor
+        if((self.start.x > self.goal.x) and (self.start.y < self.goal.y)):
+            lx = self.goal.x-zazor
+            rx = self.start.x
+            by = self.start.y
+            uy = self.goal.y+zazor
             
-        if((self.start[0] > self.goal[0]) and (self.start[1] > self.goal[1])):
-            lx = self.goal[0]-zazor
-            rx = self.start[0]
-            by = self.goal[1]-zazor 
-            uy = self.start[1]      
+        if((self.start.x > self.goal.x) and (self.start.y > self.goal.y)):
+            lx = self.goal.x-zazor
+            rx = self.start.x
+            by = self.goal.y-zazor
+            uy = self.start.y
             
-        if((self.start[0] < self.goal[0]) and (self.start[1] == self.goal[1])):
-            lx = self.start[0]
-            rx = self.goal[0]+zazor
-            by = self.start[1]-zazor 
-            uy = self.start[1]+zazor
+        if((self.start.x < self.goal.x) and (self.start.y == self.goal.y)):
+            lx = self.start.x
+            rx = self.goal.x+zazor
+            by = self.start.y-zazor
+            uy = self.start.y+zazor
              
-        if((self.start[0] < self.goal[0]) and (self.start[1] > self.goal[1])):
-            lx = self.start[0]
-            rx = self.goal[0]+zazor
-            by = self.goal[1]-zazor
-            uy = self.start[1]
+        if((self.start.x < self.goal.x) and (self.start.y > self.goal.y)):
+            lx = self.start.x
+            rx = self.goal.x+zazor
+            by = self.goal.y-zazor
+            uy = self.start.y
             
-        if((self.start[0] < self.goal[0]) and (self.start[1] < self.goal[1])):
-            lx = self.start[0]
-            rx = self.goal[0]+zazor
-            by = self.start[1] 
-            uy = self.goal[1]+zazor
+        if((self.start.x < self.goal.x) and (self.start.y < self.goal.y)):
+            lx = self.start.x
+            rx = self.goal.x+zazor
+            by = self.start.y
+            uy = self.goal.y+zazor
             
-        if((self.start[0] == self.goal[0]) and (self.start[1] > self.goal[1])):
-            lx = self.start[0]-zazor
-            rx = self.start[0]+zazor
-            by = self.goal[1]-zazor  
-            uy = self.start[1]
+        if((self.start.x == self.goal.x) and (self.start.y > self.goal.y)):
+            lx = self.start.x-zazor
+            rx = self.start.x+zazor
+            by = self.goal.y-zazor
+            uy = self.start.y
             
-        if((self.start[0] == self.goal[0]) and (self.start[1] < self.goal[1])):
-            lx = self.start[0]-zazor
-            rx = self.start[0]+zazor
-            by = self.start[1] 
-            uy = self.goal[1]+zazor
+        if((self.start.x == self.goal.x) and (self.start.y < self.goal.y)):
+            lx = self.start.x-zazor
+            rx = self.start.x+zazor
+            by = self.start.y
+            uy = self.goal.y+zazor
             
         return lx,rx,by,uy
     

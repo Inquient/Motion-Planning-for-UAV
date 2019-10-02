@@ -16,6 +16,10 @@ def distance(x1, y1, x2, y2):
     return np.sqrt(np.power(x2 - x1, 2) +
                    np.power(y2 - y1, 2))
 
+def dist_between_dots(dot1, dot2):
+    return np.sqrt(np.power(dot2.x - dot1.x, 2) +
+                   np.power(dot2.y - dot1.y, 2))
+
 # Класс Точка, состоит из двух координат, целых или дробных
 class Dot(object):
     def __init__(self, x, y):

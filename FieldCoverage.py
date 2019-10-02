@@ -108,19 +108,19 @@ camera_angle = 31.0  # В данном случае он равен 15.5, зна
 # Строим прямоугольник вокруг заданного многоугольника
 rect = draw_rect_around(p)
 flight_lines = rect.build_field_coverage(camera_angle)
-route = build_route_dots_for_field(flight_lines, p)
+route_dots = build_route_dots_for_field(flight_lines, p)
 
 # Отрисовываем заданный многоугольник, линии облёта, маршрутные точки и координатную сетку
 p.plot_poly('b', True)
 
-for line in flight_lines:
-    line.plot_line()
+# for line in flight_lines:
+#     line.plot_line()
 
-for dot in route:
+for dot in route_dots:
     plt.scatter(dot.x, dot.y, color='red')
 
-# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
-build_covered_area_for_field(route, camera_angle, 0.2)
+# 0) Строим линии предполагаемог облёта
+# build_covered_area_for_field(route, camera_angle, 0.2)
 
 # draw_coordinate_net(0, 550, 20)
 
@@ -148,8 +148,8 @@ build_covered_area_for_field(route, camera_angle, 0.2)
 # iterations = []
 # experiments = 100
 
-# my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
-# my_path.draw_multiple_paths_2d(route, fig, ax)
+my_path = RRT_path(30.0, 10000, (0, 0, 0), (90, 90, 0))
+my_path.draw_multiple_paths_2d(route_dots, fig, ax)
 
 # for x in range(0, experiments):
 #     t = time.time()
@@ -157,7 +157,7 @@ build_covered_area_for_field(route, camera_angle, 0.2)
 #     lengths.append(cur_len)
 #     iterations.append(sum(cur_iter))
 #     times.append(time.time()-t)
-#
+# #
 # print("Время, для нахождения пути")
 # print("Среднее = ", np.average(times))
 # print("Min = ", np.min(times))
