@@ -68,10 +68,26 @@ def build_route_dots_for_field(flight_lines, field_polygon):
                 cross_cords[1].append(round(cross_dot.y, 2))
         # Маршрутных точек будет всего две, вне зависимости от количества пересечений
         # Так как это точки выхода с поля. Их коодинаты:
-        route.append([max(cross_cords[0]), max(cross_cords[1])])
-        route.append([min(cross_cords[0]), max(cross_cords[1])])
+        route.append(Dot(max(cross_cords[0]), max(cross_cords[1])))
+        route.append(Dot(min(cross_cords[0]), max(cross_cords[1])))
 
     return route
+
+# Позволяет построить покрытие многоугольника данным маршрутом при заданной величине
+# угла обзора и перекрытия
+def build_covered_area_for_field(route, camera_angle, recoverage):
+    route_lines = []
+    for i in range(0, len(route) - 1, 2):
+        route_lines.append(Line((route[i]), (route[i + 1])))
+    print(route_lines)
+
+    covered_area = 0
+    for r in route_lines:
+        rect = patches.Rectangle((r.end_dot.x, r.end_dot.y - camera_angle / 2), r.get_line_length(), camera_angle,
+                                 facecolor='b', alpha=0.1)
+        covered_area += r.get_line_length() * (camera_angle - camera_angle * recoverage)
+        ax.add_patch(rect)
+        plt.plot([r.start_dot.x, r.end_dot.x], [r.start_dot.y, r.end_dot.y], marker='o', color='red')
 
 
 # Задаём двухмерное пространство
@@ -94,22 +110,25 @@ rect = draw_rect_around(p)
 flight_lines = rect.build_field_coverage(camera_angle)
 route = build_route_dots_for_field(flight_lines, p)
 
-# Отрисовываем заданный многоугольник
+# Отрисовываем заданный многоугольник, линии облёта, маршрутные точки и координатную сетку
 p.plot_poly('b', True)
 
 for line in flight_lines:
     line.plot_line()
 
 for dot in route:
-    plt.scatter(dot[0], dot[1], color='red')
+    plt.scatter(dot.x, dot.y, color='red')
 
-# Выстраиваем точки в правильном порядке
-for i in range(0, len(route), 4):
-    temp = route[i]
-    route[i] = route[i + 1]
-    route[i + 1] = temp
+# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
+build_covered_area_for_field(route, camera_angle, 0.2)
 
 # draw_coordinate_net(0, 550, 20)
+
+# Выстраиваем точки в правильном порядке
+# for i in range(0, len(route), 4):
+#     temp = route[i]
+#     route[i] = route[i + 1]
+#     route[i + 1] = temp
 
 # Запретные зоны
 # p1 = Polygon([(150,100),(150,200),(220,210),(220,170),(180,120),])
@@ -121,25 +140,6 @@ for i in range(0, len(route), 4):
 # ax.add_patch(rect1)
 # ax.add_patch(rect2)
 
-# 0) Строим линии предполагаемог облёта, рисуем их и считаем его общую длинну
-# route_lines = []
-# for i in range(0, len(route)-1,2):
-#     route_lines.append(Line((route[i][0], route[i][1]), (route[i + 1][0], route[i + 1][1])))
-# print(route_lines)
-#
-# covered_area = 0
-# for r in route_lines:
-#     rect = patches.Rectangle((r.end_dot[0], r.end_dot[1]-camera_angle/2), r.get_line_length(), camera_angle,
-#                              facecolor='b', alpha=0.1)
-#     covered_area += r.get_line_length() * (camera_angle - camera_angle*0.2)
-#     ax.add_patch(rect)
-#     plt.plot([r.start_dot[0], r.end_dot[0]], [r.start_dot[1], r.end_dot[1]], marker = 'o', color = 'red')
-#
-# s=0
-# for l in route_lines:
-#     s += l.get_line_length()
-# print(s)
-# print(covered_area)
 
 # Поскольку в нашем распоряжении все маршрутные точки, можно строить сам путь
 # 1) RRT-connect
